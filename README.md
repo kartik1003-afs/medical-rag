@@ -9,7 +9,7 @@ A multi-agent AI system that helps users explore biomedical research papers and 
 - **Retriever Agent**: Similarity search for top-k contextual abstracts against the vector DB.
 - **Analysis Agent**: Connects to Hugging Face Serverless Inference API (`Mistral-7B-Instruct`) to distill key findings.
 - **Report Agent**: Compiles the summarized research with cited sources.
-- **Evaluation Module**: Implements RAGAS framework (faithfulness, answer relevance, context precision, context recall) to objectively output metrics using HF evaluator models.
+- **Evaluation Module**: Evaluates the RAG pipeline using local embedding-based cosine similarity and lexical (Jaccard similarity) overlap metrics.
 
 ## 🛠️ Tech Stack
 - **Dependency Management**: `uv`
