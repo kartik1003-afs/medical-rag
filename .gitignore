@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Local secrets & databases
+.env
+data/
+*.db
+.mypy_cache/
+.ipynb_checkpoints/

@@ -15,20 +15,35 @@ class GraphState(TypedDict):
     retrieved_papers: List[dict]
     analysis: str
     report: str
+    task_id: str
+
+def safe_update_status(state: GraphState, status: str, message: str):
+    task_id = state.get("task_id")
+    if task_id:
+        try:
+            from backend.database import update_task_status
+            update_task_status(task_id, status, message)
+        except Exception as e:
+            print(f"Failed to update task status in DB: {e}")
+    else:
+        print(f"[{status}] {message}")
 
 def plan_node(state: GraphState):
     query = state["query"]
+    safe_update_status(state, "PLANNING", "Analyzing research query and structuring plan...")
     plan = generate_plan(query)
     return {"plan": plan}
 
 def fetch_pubmed_node(state: GraphState):
     query = state["query"]
+    safe_update_status(state, "FETCHING_PUBMED", "Searching and fetching abstracts from PubMed...")
     # We fetch a larger pool of papers from PubMed to index
     papers = search_pubmed(query, max_results=10)
     return {"raw_papers": papers}
 
 def evidence_node(state: GraphState):
     papers = state.get("raw_papers", [])
+    safe_update_status(state, "CLASSIFYING_EVIDENCE", f"Classifying clinical evidence levels for {len(papers)} papers...")
     if papers:
         papers = classify_study_types(papers)
     return {"raw_papers": papers}
@@ -36,6 +51,7 @@ def evidence_node(state: GraphState):
 def retrieve_node(state: GraphState):
     query = state["query"]
     papers = state.get("raw_papers", [])
+    safe_update_status(state, "RETRIEVING", "Indexing papers into FAISS and running similarity search...")
     
     # Initialize retriever
     retriever = DocumentRetriever()
@@ -53,6 +69,7 @@ def retrieve_node(state: GraphState):
 def analyze_node(state: GraphState):
     query = state["query"]
     papers = state.get("retrieved_papers", [])
+    safe_update_status(state, "ANALYZING", f"Distilling clinical findings from {len(papers)} retrieved papers...")
     if not papers:
         return {"analysis": "No relevant papers found to analyze."}
         
@@ -63,6 +80,7 @@ def report_node(state: GraphState):
     query = state["query"]
     analysis = state.get("analysis", "")
     papers = state.get("retrieved_papers", [])
+    safe_update_status(state, "COMPILING_REPORT", "Assembling final research summary and compiling sources...")
     report = generate_report(query, analysis, papers)
     return {"report": report}
 
@@ -90,6 +108,7 @@ if __name__ == "__main__":
     app = build_graph()
     query = "Treatments for Alzheimer's Disease"
     print(f"Running pipeline for query: {query}")
-    final_state = app.invoke({"query": query})
+    final_state = app.invoke({"query": query, "task_id": ""})
     print("\n--- FINAL REPORT ---\n")
     print(final_state["report"])
+
