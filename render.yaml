@@ -4,8 +4,8 @@ services:
     name: medical-research-backend
     plan: free
     runtime: python
-    buildCommand: "pip install uv && uv sync"
-    startCommand: "uv run uvicorn backend.server:app --host 0.0.0.0 --port $PORT"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn backend.server:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -20,8 +20,8 @@ services:
     name: medical-research-frontend
     plan: free
     runtime: python
-    buildCommand: "pip install uv && uv sync"
-    startCommand: "uv run streamlit run frontend/app.py --server.port $PORT --server.address 0.0.0.0"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "streamlit run frontend/app.py --server.port $PORT --server.address 0.0.0.0"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
