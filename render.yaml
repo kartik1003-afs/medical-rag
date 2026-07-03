@@ -24,6 +24,4 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: BACKEND_URL
-        fromService:
-          name: medical-research-backend
-          type: web
+        value: "https://medical-research-backend.onrender.com"
