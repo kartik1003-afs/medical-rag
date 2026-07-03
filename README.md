@@ -1,6 +1,6 @@
 # Agentic AI Medical Research Assistant 🧬
 
-A multi-agent AI system that helps users explore biomedical research papers and generates evidence-based summaries using ONLY open-source tools, free HF inference APIs, and the PubMed free database.
+A multi-agent AI system that helps users explore biomedical research papers and generates evidence-based summaries using open-source tools, Hugging Face API, Google Gemini, and the PubMed/PMC databases.
 
 ## 🏗️ System Architecture & Multi-Agent System
 - **Planner Agent**: Analyzes the query and structures the task plan.
@@ -53,6 +53,6 @@ A multi-agent AI system that helps users explore biomedical research papers and 
    ```
 2. **Run the container**:
    ```bash
-   docker run -p 8501:8501 -e HF_TOKEN=your_token_here medical-assistant
+   docker run -p 8501:8501 -e HUGGINGFACEHUB_API_TOKEN=your_hf_token_here -e GEMINI_API_KEY=your_gemini_key_here medical-assistant
    ```
    Then visit `http://localhost:8501` in your browser.
