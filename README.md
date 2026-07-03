@@ -4,12 +4,14 @@ A multi-agent AI system that helps users explore biomedical research papers and 
 
 ## 🏗️ System Architecture & Multi-Agent System
 - **Planner Agent**: Analyzes the query and structures the task plan.
-- **PubMed Search Agent**: Searches and fetches biomedical abstracts via the National Library of Medicine E-Utilities API.
-- **RAG & Embeddings**: Creates a local FAISS index using `sentence-transformers/all-MiniLM-L6-v2` embeddings downloaded from HF Hub.
-- **Retriever Agent**: Similarity search for top-k contextual abstracts against the vector DB.
-- **Analysis Agent**: Connects to Hugging Face Serverless Inference API (`Mistral-7B-Instruct`) to distill key findings.
+- **PubMed & PMC Fetcher**: Searches and fetches biomedical abstracts, and automatically downloads open-access **full-text articles** from PubMed Central (PMC) when available.
+- **RAG & Embeddings**: Creates a local FAISS index using semantic embeddings for vector similarity search.
+- **Retriever Agent**: Similarity search for top-k relevant paragraphs against the vector DB.
+- **Analysis Agent**: Connects to Google GenAI (`gemini-2.5-flash`) to extract key findings, treatment details, and **disease symptoms**.
 - **Report Agent**: Compiles the summarized research with cited sources.
+- **Medical Safety Verifier Agent**: Safety guardrail that cross-references report claims against source texts to flag any medical hallucinations, appending a **Medical Verification Warning/Safety Seal**.
 - **Evaluation Module**: Evaluates the RAG pipeline using local embedding-based cosine similarity and lexical (Jaccard similarity) overlap metrics.
+- **Diagnostic Analytics**: Integrated diagnostic metrics directly in the history view tracking system performance and job stats.
 
 ## 🛠️ Tech Stack
 - **Dependency Management**: `uv`
