@@ -1,0 +1,29 @@
+services:
+  # Backend FastAPI service
+  - type: web
+    name: medical-research-backend
+    runtime: python
+    buildCommand: "pip install uv && uv sync"
+    startCommand: "uv run uvicorn backend.server:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      # Required secrets (User will need to set these in Render Dashboard or define them)
+      - key: HUGGINGFACEHUB_API_TOKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # Frontend Streamlit service
+  - type: web
+    name: medical-research-frontend
+    runtime: python
+    buildCommand: "pip install uv && uv sync"
+    startCommand: "uv run streamlit run frontend/app.py --server.port $PORT --server.address 0.0.0.0"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: BACKEND_URL
+        fromService:
+          name: medical-research-backend
+          type: web
