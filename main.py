@@ -6,6 +6,7 @@ from agents.pubmed_agent import search_pubmed
 from agents.analysis_agent import analyze_papers
 from agents.report_agent import generate_report
 from agents.evidence_agent import classify_study_types
+from agents.verifier_agent import verify_report
 from retrieval.retriever import DocumentRetriever
 
 class GraphState(TypedDict):
@@ -84,6 +85,14 @@ def report_node(state: GraphState):
     report = generate_report(query, analysis, papers)
     return {"report": report}
 
+def verify_node(state: GraphState):
+    query = state["query"]
+    report = state.get("report", "")
+    papers = state.get("retrieved_papers", [])
+    safe_update_status(state, "VERIFYING", "Verifying clinical claims in report against source papers...")
+    verified_report = verify_report(query, report, papers)
+    return {"report": verified_report}
+
 def build_graph():
     workflow = StateGraph(GraphState)
     
@@ -93,6 +102,7 @@ def build_graph():
     workflow.add_node("retriever", retrieve_node)
     workflow.add_node("analyzer", analyze_node)
     workflow.add_node("reporter", report_node)
+    workflow.add_node("verifier", verify_node)
     
     workflow.set_entry_point("planner")
     workflow.add_edge("planner", "pubmed_fetcher")
@@ -100,7 +110,8 @@ def build_graph():
     workflow.add_edge("evidence_classifier", "retriever")
     workflow.add_edge("retriever", "analyzer")
     workflow.add_edge("analyzer", "reporter")
-    workflow.add_edge("reporter", END)
+    workflow.add_edge("reporter", "verifier")
+    workflow.add_edge("verifier", END)
     
     return workflow.compile()
 

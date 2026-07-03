@@ -1,6 +1,36 @@
 import requests
 import xml.etree.ElementTree as ET
 
+def fetch_pmc_fulltext(pmcid: str) -> str:
+    """
+    Fetch and parse the full-text body paragraphs from PMC.
+    """
+    try:
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+        params = {
+            "db": "pmc",
+            "id": pmcid,
+            "retmode": "xml"
+        }
+        res = requests.get(url, params=params)
+        res.raise_for_status()
+        
+        # Parse PMC XML
+        pmc_root = ET.fromstring(res.content)
+        body = pmc_root.find(".//body")
+        if body is not None:
+            paragraphs = []
+            for p in body.findall(".//p"):
+                # Collect paragraph text recursively
+                text = "".join(p.itertext()).strip()
+                if text:
+                    paragraphs.append(text)
+            if paragraphs:
+                return "\n\n".join(paragraphs)
+    except Exception as e:
+        print(f"Error fetching full text for {pmcid}: {e}")
+    return ""
+
 def search_pubmed(query: str, max_results: int = 5) -> list[dict]:
     """
     Search PubMed for research papers using the E-utilities API.
@@ -44,6 +74,13 @@ def search_pubmed(query: str, max_results: int = 5) -> list[dict]:
         pmid = article.findtext(".//PMID")
         title = article.findtext(".//ArticleTitle")
         
+        # Parse PMC ID if available
+        pmcid = None
+        for article_id in article.findall(".//ArticleIdList/ArticleId"):
+            if article_id.get("IdType") == "pmc":
+                pmcid = article_id.text
+                break
+        
         abstract_element = article.find(".//Abstract")
         abstract = ""
         if abstract_element is not None:
@@ -63,10 +100,17 @@ def search_pubmed(query: str, max_results: int = 5) -> list[dict]:
             if last_name:
                 authors_list.append(f"{last_name} {initials}".strip())
                 
+        # Attempt to retrieve PMC full-text if PMC ID is found
+        full_text = ""
+        if pmcid:
+            full_text = fetch_pmc_fulltext(pmcid)
+            
         papers.append({
             "pmid": pmid,
+            "pmcid": pmcid,
             "title": title,
-            "abstract": abstract,
+            "abstract": full_text if full_text else abstract,
+            "raw_abstract": abstract,
             "year": year,
             "journal": journal,
             "authors": ", ".join(authors_list),

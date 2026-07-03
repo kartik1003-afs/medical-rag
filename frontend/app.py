@@ -22,7 +22,7 @@ hf_token = st.sidebar.text_input("Hugging Face API Token:", type="password", hel
 gemini_key = st.sidebar.text_input("Gemini API Key:", type="password", help="Required for Gemini LLMs. Leave empty if set on server environment.")
 
 # Helper function to render research results (reused for new runs and history)
-def render_research_results(results):
+def render_research_results(results, key_suffix=""):
     # 1. Retrieved Papers Table
     st.subheader("Retrieved Papers (Sources)")
     retrieved_papers = results.get("retrieved_papers", [])
@@ -64,9 +64,9 @@ def render_research_results(results):
             range_y=[0, 1], 
             title="Local RAG Semantic & Overlap Evaluation",
             color="Score",
-            color_continuous_scale="Viridis"
+            color_continuous_scale=["#0b3c43", "#125e68", "#1d8a97", "#3fb0ac", "#73e2d6", "#c2f7f2"],
         )
-        st.plotly_chart(fig_metrics, use_container_width=True)
+        st.plotly_chart(fig_metrics, use_container_width=True, key=f"plotly_chart_metrics_{key_suffix}")
         if "warning" in metrics:
             st.warning(f"Note: {metrics['warning']}")
     elif metrics and "error" in metrics:
@@ -75,7 +75,7 @@ def render_research_results(results):
         st.info("No evaluation metrics generated.")
 
 # Tabs Setup
-tab1, tab2, tab3 = st.tabs(["🧬 New Research", "📜 Research History", "📊 Dashboard Stats"])
+tab1, tab2 = st.tabs(["🧬 New Research", "📜 Research History"])
 
 # Tab 1: New Research Run
 with tab1:
@@ -116,8 +116,9 @@ with tab1:
                 "CLASSIFYING_EVIDENCE": (65, "⚖️ Classifying clinical study designs..."),
                 "RETRIEVING": (80, "🗄️ Indexing and retrieving via FAISS..."),
                 "ANALYZING": (90, "🧠 Distilling clinical findings..."),
-                "COMPILING_REPORT": (95, "📋 Assembling final report..."),
-                "EVALUATING": (98, "📊 Running semantic evaluation..."),
+                "COMPILING_REPORT": (94, "📋 Assembling final report..."),
+                "VERIFYING": (97, "🛡️ Verifying clinical claims..."),
+                "EVALUATING": (99, "📊 Running semantic evaluation..."),
                 "COMPLETED": (100, "✅ Completed!"),
                 "FAILED": (100, "❌ Failed.")
             }
@@ -144,7 +145,7 @@ with tab1:
                         time.sleep(1)
                         status_container.empty()
                         progress_bar.empty()
-                        render_research_results(task_data)
+                        render_research_results(task_data, key_suffix=f"new_{task_id}")
                         break
                     elif status == "FAILED":
                         st.error(f"Pipeline failed: {task_data.get('error_message', 'Unknown error')}")
@@ -231,7 +232,7 @@ with tab2:
                     st.divider()
                     
                     if task_detail['status'] == 'COMPLETED':
-                        render_research_results(task_detail)
+                        render_research_results(task_detail, key_suffix=f"history_{task_id}")
                     elif task_detail['status'] == 'FAILED':
                         st.error(f"This run failed with error: {task_detail.get('error_message')}")
                     else:
@@ -239,12 +240,8 @@ with tab2:
                 except Exception as e:
                     st.error(f"Failed to load details for task {task_id}: {str(e)}")
 
-# Tab 3: Dashboard Stats
-with tab3:
+    st.divider()
     st.header("System Diagnostic Dashboard & Analytics")
-    if st.button("Refresh Dashboard Stats", key="refresh_stats_btn"):
-        st.rerun()
-        
     try:
         stats_response = requests.get(f"{BACKEND_URL}/api/research/stats")
         stats_response.raise_for_status()
@@ -257,25 +254,5 @@ with tab3:
         col_s3.metric("Failed Jobs", stats.get("failed_jobs", 0))
         col_s4.metric("Success Rate", f"{stats.get('success_rate', 0.0)}%")
         
-        st.divider()
-        st.subheader("Top Research Queries")
-        
-        pop_queries = stats.get("popular_queries", [])
-        if pop_queries:
-            df_pop = pd.DataFrame(pop_queries)
-            # Create a nice horizontal bar chart
-            fig_pop = px.bar(
-                df_pop, 
-                x="count", 
-                y="query", 
-                orientation='h', 
-                labels={"count": "Number of Runs", "query": "Research Topic"},
-                color="count",
-                color_continuous_scale="Plasma",
-                title="Top 5 Research Topics Run"
-            )
-            st.plotly_chart(fig_pop, use_container_width=True)
-        else:
-            st.info("No query logs recorded in database yet.")
     except Exception as e:
         st.error(f"Failed to load dashboard metrics from backend: {str(e)}")

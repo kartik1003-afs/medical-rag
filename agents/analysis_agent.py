@@ -17,10 +17,12 @@ def analyze_papers(query: str, papers: list[dict]) -> str:
         context += f"[{idx}] Title: {paper.get('title')}\nAbstract: {paper.get('abstract')}\n\n"
         
     prompt = f"""You are a professional medical research assistant. Based on the following research papers, extract key findings related to the query. 
-If the query pertains to a disease, you MUST extract and categorize specific "Treatment Details", including:
-1. Treatment Names/Methods
-2. Efficacy & Results
-3. Noted Side Effects (if any)
+If the query pertains to a disease, you MUST extract and categorize:
+1. Common Symptoms (if mentioned)
+2. Treatment Details, including:
+   - Treatment Names/Methods
+   - Efficacy & Results
+   - Noted Side Effects (if any)
 
 Query: {query}
 
@@ -30,6 +32,9 @@ Research Papers:
 Format your response exactly as follows:
 ### Core Findings
 [A general structured summary]
+
+### Common Symptoms
+[Detailed markdown bullet points listing symptoms of the disease]
 
 ### Treatment Details
 [Detailed markdown bullet points or tables highlighting treatments, their efficacy, and side effects]
